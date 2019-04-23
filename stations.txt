@@ -1,0 +1,17 @@
+user/xoma163rus 
+genre/pop 
+genre/ruspop 
+genre/disco 
+genre/kpop 
+genre/indie
+genre/local-indie 
+genre/rock 
+genre/rusrock 
+genre/rnr
+genre/prog
+genre/postrock
+genre/newwave
+genre/folkrock
+genre/stonerrock
+genre/hardrock
+activity/workout

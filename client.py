@@ -8,7 +8,8 @@ import time
 import sys
 import hashlib
 
-LOGGING = True
+LOGGING = False
+
 
 class Logger:
     def __init__(self):
@@ -100,6 +101,7 @@ class YandexRadio:
                 cookies = pickle.load(f)
         except:
             pass
+        print("Cookies = " + str(cookies))
 
         self.session = requests.Session()
         if cookies:
@@ -176,7 +178,7 @@ class YandexRadio:
                               headers=self.make_headers(headers),
                               )
 
-    # self.ui.status('Post radioStarted')
+        # self.ui.status('Post radioStarted')
         # if r.status_code != 202:
         #     self.ui.error('radioStarted: ' + r.text)
         if LOGGING: print("Post radioStarted")

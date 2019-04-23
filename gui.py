@@ -38,18 +38,21 @@ class Gui(QMainWindow):
         self.button_next = QtWidgets.QPushButton(self)
         self.button_dislike = QtWidgets.QPushButton(self)
         self.button_save = QtWidgets.QPushButton(self)
+        self.button_share = QtWidgets.QPushButton(self)
         self.button_like = QtWidgets.QPushButton(self)
         self.label_duration_0 = QtWidgets.QLabel(self)
         self.label_duration_1 = QtWidgets.QLabel(self)
         self.slider_volume = QtWidgets.QSlider(self)
         self.album_cover = QLabel(self)
         self.button_repeat = QtWidgets.QPushButton(self)
+        self.button_shuffle = QtWidgets.QPushButton(self)
         self.combo_tag = QtWidgets.QComboBox(self)
 
         self.is_playing = False
         self.is_repeated = False
         self.is_saved = False
         self.is_liked = False
+        self.is_shuffle = False
         self.tag = ""
 
         self.prev_clicked = False
@@ -57,6 +60,7 @@ class Gui(QMainWindow):
         self.next_clicked = False
         self.like_clicked = False
         self.save_clicked = False
+        self.share_clicked = False
         self.dislike_clicked = False
         self.timeline_changed = False
 
@@ -67,21 +71,21 @@ class Gui(QMainWindow):
         self.init_GUI()
         self.show()
 
-    def set_song_info(self, artist, title, duration, image_link):
-        self.label_artist.setText(artist)
+    def set_song_info(self, artist, title, album_title, duration, image_link):
+        self.label_artist.setText("%s (%s)" % (artist, album_title))
         self.label_title.setText(title)
         self.slider_timeline.setMaximum(duration)
 
-        # ToDo: Сделай Проверку по названию песни в папке saved
-        self.set_is_saved(False)
+        filename = "%s/saved/%s - %s.mp3" % (os.getcwd(), artist, title)
+        if os.path.isfile(filename):
+            self.set_is_saved(True)
+        else:
+            self.set_is_saved(False)
+
         # ToDo: Возможно ли сделать проверку на лайкнуто?
         self.set_is_liked(False)
 
-        m, s = divmod(int(duration), 60)
-        if m < 10:
-            m = "0" + str(m)
-        if s < 10:
-            s = "0" + str(s)
+        m, s = self._get_time_from_seconds(duration)
         self.label_duration_1.setText("%s:%s" % (m, s))
 
         data = requests.get(image_link).content
@@ -89,17 +93,20 @@ class Gui(QMainWindow):
         pixmap.loadFromData(data)
         self.album_cover.setPixmap(pixmap)
 
-    def set_time(self, time):
-        sec = int(time / 1000000000)
-        self.last_timeline_value = sec
-        self.slider_timeline.setValue(sec)
-        m, s = divmod(sec, 60)
+    def set_time(self, seconds):
+        self.last_timeline_value = seconds
+        self.slider_timeline.setValue(seconds)
+        m, s = self._get_time_from_seconds(seconds)
+        self.label_duration_0.setText("%s:%s" % (m, s))
+
+    @staticmethod
+    def _get_time_from_seconds(seconds):
+        m, s = divmod(seconds, 60)
         if m < 10:
             m = "0" + str(m)
         if s < 10:
             s = "0" + str(s)
-
-        self.label_duration_0.setText("%s:%s" % (m, s))
+        return m, s
 
     def set_is_saved(self, status):
         self.is_saved = status
@@ -138,6 +145,9 @@ class Gui(QMainWindow):
     def button_save_clicked(self):
         self.save_clicked = True
 
+    def button_share_clicked(self):
+        self.share_clicked = True
+
     def button_dislike_clicked(self):
         self.dislike_clicked = True
 
@@ -149,6 +159,13 @@ class Gui(QMainWindow):
         else:
             self.button_repeat.setIcon(QIcon('media/repeat.svg'))
 
+    def button_shuffle_clicked(self):
+        self.is_shuffle = not self.is_shuffle
+        if self.is_shuffle:
+            self.button_shuffle.setIcon(QIcon('media/shuffle_active.png'))
+        else:
+            self.button_shuffle.setIcon(QIcon('media/shuffle.svg'))
+
     def reset_flags(self):
         self.prev_clicked = False
         self.pause_clicked = False
@@ -158,6 +175,7 @@ class Gui(QMainWindow):
         self.dislike_clicked = False
         self.timeline_changed = False
         self.repeat_clicked = False
+        self.share_clicked = False
 
     def slider_timeline_changed(self):
         # TODO: Сделай что-нибудь поадекватнее.
@@ -172,7 +190,7 @@ class Gui(QMainWindow):
     def slider_volume_changed(self):
         self.volume = self.slider_volume.value() / 100
 
-    def combo_tag_changed(self,text):
+    def combo_tag_changed(self, text):
         self.tag = text
 
     def closeEvent(self, args):
@@ -252,29 +270,47 @@ class Gui(QMainWindow):
                                      BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
         self.button_save.clicked.connect(self.button_save_clicked)
 
+        self.button_share.setIcon(QIcon('media/share.svg'))
+        self.button_share.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
+        self.button_share.setGeometry(30 + (10 + 20) * 2, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
+                                      BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
+        self.button_share.clicked.connect(self.button_share_clicked)
+
+
         self.button_like.setIcon(QIcon('media/heart.svg'))
         self.button_like.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
-        self.button_like.setGeometry(30 + (10 + 20) * 2, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
+        self.button_like.setGeometry(30 + (10 + 20) * 3, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
                                      BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
         self.button_like.clicked.connect(self.button_like_clicked)
 
         # --- Extra buttons 2 --- #
         self.button_repeat.setIcon(QIcon('media/repeat.svg'))
         self.button_repeat.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
-        self.button_repeat.setGeometry(WINDOW_SIZE[0] - 60, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
+        self.button_repeat.setGeometry(WINDOW_SIZE[0] - 70, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
                                        BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
         self.button_repeat.clicked.connect(self.button_repeat_clicked)
 
-        self.combo_tag.setGeometry(WINDOW_SIZE[0] - 205, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10, 135, 20)
-        self.combo_tag.addItems(
-            ["user/xoma163rus", "genre/pop", "genre/ruspop", "genre/disco", "genre/kpop", "genre/indie", "genre/local-indie", "genre/rock", "genre/rusrock", "genre/rnr",
-             "genre/prog", "genre/postrock", "genre/newwave", "genre/folkrock", "genre/stonerrock", "genre/hardrock", "activity/workout"]) # Лень
+        self.button_shuffle.setIcon(QIcon('media/shuffle.svg'))
+        self.button_shuffle.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
+        self.button_shuffle.setGeometry(WINDOW_SIZE[0] - 40, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
+                                        BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
+        self.button_shuffle.clicked.connect(self.button_shuffle_clicked)
+
+        self.combo_tag.setGeometry(WINDOW_SIZE[0] - 2 * WINDOW_SIZE[0] / 3 + 20, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
+                                   WINDOW_SIZE[0] / 3, 20)
+
+        f = open('stations.txt', 'r')
+
+        for line in f:
+            line = line.replace('\n', '').replace('\r', '').replace(' ', '')
+            self.combo_tag.addItem(line)
+
         self.combo_tag.activated[str].connect(self.combo_tag_changed)
         self.combo_tag.setCurrentIndex(0)
         self.tag = self.combo_tag.currentText()
 
         # --- Volume --- #
-        self.slider_volume.setGeometry(WINDOW_SIZE[0] - 25, WINDOW_SIZE[1] - 100, 20, 80)
+        self.slider_volume.setGeometry(WINDOW_SIZE[0] - 20, WINDOW_SIZE[1] - 100, 20, 80)
         self.slider_volume.setMaximum(100)
         self.slider_volume.setValue(50)
         self.slider_volume.valueChanged.connect(self.slider_volume_changed)

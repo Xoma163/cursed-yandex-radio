@@ -33,7 +33,7 @@ class Player:
 
         self.terminate = False
 
-    def play(self, yar, track, info, batch, duration, len_lasttracks):
+    def play(self, yar, track, info, batch, duration, len_last_played):
         tid, aid = track
         url = yar.gettrack(tid, aid)
 
@@ -46,23 +46,22 @@ class Player:
         bus = self.player.get_bus()
         reason = 'trackFinished'
 
-        self.gui.set_song_info("%s (%s)" % (info[2], info[1]), info[0], int(duration / 1000), info[3])
+        self.gui.set_song_info(info[2], info[0], info[1], int(duration / 1000), info[3])
 
         while True:
 
             self.player.set_property('volume', self.gui.volume)
             ret, played_time = self.player.query_position(gst.Format.TIME)
             if played_time != 0:
-                self.gui.set_time(played_time)
+                self.gui.set_time(int(played_time/ 10**9))
 
             msg = bus.timed_pop_filtered(100 * gst.MSECOND, gst.MessageType.ERROR | gst.MessageType.EOS)
 
             if self.gui.timeline_changed:
                 self.go_to_time(self.gui.timeline)
 
-
             if self.gui.prev_clicked:
-                if len_lasttracks >= 2:
+                if len_last_played >= 2:
                     break
                 else:
                     self.gui.reset_flags()
@@ -96,6 +95,11 @@ class Player:
                 self.gui.reset_flags()
                 self.gui.set_is_saved(True)
 
+            if self.gui.share_clicked:
+                # clipboard.copy(url)
+                print(url)
+                self.gui.reset_flags()
+
             if self.gui.dislike_clicked:
                 reason = 'dislike'
                 self.gui.reset_flags()
@@ -117,9 +121,9 @@ class Player:
         stop_time = time.time()
         dur = stop_time - start_time
 
-        print("real "+str(duration)) # Это настоящее
-        print("fact "+str(dur))  # Это фактическое
-        print("player "+str(played_time))  # Это плеера
+        print("real " + str(duration))  # Это настоящее
+        print("fact " + str(dur))  # Это фактическое
+        print("player " + str(played_time))  # Это плеера
 
         yar.feedback(reason, dur, tid, aid, batch)
 
