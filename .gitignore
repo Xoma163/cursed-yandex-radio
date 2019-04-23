@@ -2,4 +2,3 @@ cookies.dat
 *.log
 __pycache__
 *.pyc
-.idea/*

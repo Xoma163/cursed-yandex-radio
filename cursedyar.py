@@ -1,41 +1,74 @@
 #!/usr/bin/env python3
+# coding: utf8
+
 
 from __future__ import absolute_import
 
 import sys
-import curses
-import locale
 
-from ui import UserInterface
 from client import YandexRadio
 from player import Player
 
-def main(wnd):
+
+def main(gui):
     global terminate
     if len(sys.argv) > 1:
         tag = sys.argv[1]
     else:
-        tag = 'activity/work-background'
-    ui = UserInterface(wnd)
-    yar = YandexRadio(tag, ui)
-    pl = Player()
+        tag = gui.tag
 
-    lastplayed = None
+    global ya_radio
+    ya_radio = YandexRadio(tag)
+    pl = Player(gui)
+
+    last_track = None
     queue = []
+    last_played = []
+
     while not pl.terminate:
-        if len(queue) == 0:
-            queue = yar.gettracks(lastplayed)
+        k = 0
+        while len(queue) == 0:
+            if k%2==0:
+                queue = ya_radio.gettracks(last_track)
+            else:
+                queue = ya_radio.gettracks(None)
 
-        curtrack = queue[0]
+
+            list_to_delete = []
+            for i in range(len(queue)):
+                for j in range(len(last_played)):
+                    if queue[i][2] == last_played[j][2]:
+                        list_to_delete.append(i)
+                        # print("I found the track which you hear before")
+
+            list_to_delete = sorted(list(set(list_to_delete)),reverse=True)
+
+            for i in range(len(list_to_delete)):
+                queue.pop(list_to_delete[i])
+            k+=1
+
+        current_track = queue[0]
+        gui.reset_flags()
+
+        last_played.append(current_track)
         queue = queue[1:]
-        info = curtrack[2]
-        # dur = curtrack[3]
-        batch = curtrack[4]
-        curtrack = curtrack[:2]
-        pl.play(yar, curtrack, info, batch)
-        lastplayed = curtrack
-    yar.save_cookies()
+        info = current_track[2]
+        dur = current_track[3]
+        batch = current_track[4]
+        current_track = current_track[:2]
+        pl.play(ya_radio, current_track, info, batch, dur, len(last_played))
+        last_track = current_track
 
-if __name__ == "__main__":
-    locale.setlocale(locale.LC_ALL, "")
-    curses.wrapper(main)
+        if gui.tag != tag:
+            print("Refreshed queue and ya_radio")
+            queue=[]
+            last_played = []
+            ya_radio.save_cookies()
+            ya_radio = YandexRadio("epoch/fifties")
+
+
+def close_app():
+    global ya_radio
+    ya_radio.save_cookies()
+
+

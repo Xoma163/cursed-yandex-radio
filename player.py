@@ -1,16 +1,27 @@
+#!/usr/bin/env python3
+# coding: utf8
+
+import os
 import gi
+
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst as gst
 import sys
 import time
+import requests
+# Todo: поделиться треком
+import clipboard
 
-import signal
 
 class Player:
-    def __init__(self):
+    def __init__(self, gui):
+        self.gui = gui
+        self.is_playing = True
         gst.init(sys.argv)
 
         player = gst.ElementFactory.make('playbin', 'player')
+        player.set_property('volume', self.gui.volume)
+
         sink = gst.ElementFactory.make('autoaudiosink', 'audio_sink')
 
         if not sink or not player:
@@ -21,55 +32,105 @@ class Player:
         self.player = player
 
         self.terminate = False
-        def sigint(signum, frame):
-            self.terminate = True
-        signal.signal(signal.SIGINT, sigint)
 
-    def play(self, yar, track, info, batch):
+    def play(self, yar, track, info, batch, duration, len_lasttracks):
         tid, aid = track
         url = yar.gettrack(tid, aid)
-        yar.ui.refresh()
-        yar.ui.header(yar.tag)
-        yar.ui.title(info[0])
-        yar.ui.album(info[1])
-        yar.ui.artist(info[2])
 
         self.player.set_property('uri', url)
         self.player.set_state(gst.State.PLAYING)
 
         yar.started(tid, aid, batch)
 
-        startTime = time.time()
+        start_time = time.time()
         bus = self.player.get_bus()
         reason = 'trackFinished'
+
+        self.gui.set_song_info("%s (%s)" % (info[2], info[1]), info[0], int(duration / 1000), info[3])
+
         while True:
-            msg = bus.timed_pop_filtered(100 * gst.MSECOND,
-                    gst.MessageType.ERROR | gst.MessageType.EOS)
-            key = yar.ui.poll()
 
-            if self.terminate:
-                break
+            self.player.set_property('volume', self.gui.volume)
+            ret, played_time = self.player.query_position(gst.Format.TIME)
+            if played_time != 0:
+                self.gui.set_time(played_time)
 
-            if key == ord('q') or key == 27:
-                self.terminate = True
-                break
-            if key == ord('d'):
-                reason = 'dislike'
-                break
-            if key in [ord('\n'), ord('n'), ord('s'), ord(' ')]:
+            msg = bus.timed_pop_filtered(100 * gst.MSECOND, gst.MessageType.ERROR | gst.MessageType.EOS)
+
+            if self.gui.timeline_changed:
+                self.go_to_time(self.gui.timeline)
+
+
+            if self.gui.prev_clicked:
+                if len_lasttracks >= 2:
+                    break
+                else:
+                    self.gui.reset_flags()
+
+            if self.gui.pause_clicked:
+                self.is_playing = not self.is_playing
+                if self.is_playing:
+                    self.player.set_state(gst.State.PLAYING)
+                else:
+                    self.player.set_state(gst.State.PAUSED)
+                self.gui.reset_flags()
+
+            if self.gui.next_clicked:
                 reason = 'skip'
+                self.gui.reset_flags()
                 break
-            if key == ord('l'):
-                evTime = time.time()
-                dur = evTime - startTime
-                yar.feedback('like', dur, tid, aid, batch)
 
-            if msg == None:
-                continue
-            if msg.type == gst.MessageType.EOS or msg.type == gst.MessageType.ERROR:
+            if self.gui.like_clicked:
+                evTime = time.time()
+                dur = evTime - start_time
+                yar.feedback('like', dur, tid, aid, batch)
+                self.gui.reset_flags()
+                self.gui.set_is_liked(True)
+
+            if self.gui.save_clicked:
+                filename = "%s/saved/%s - %s.mp3" % (os.getcwd(), info[2], info[0])
+
+                myfile = requests.get(url)
+                with open(filename, "wb") as file:
+                    file.write(myfile.content)
+                self.gui.reset_flags()
+                self.gui.set_is_saved(True)
+
+            if self.gui.dislike_clicked:
+                reason = 'dislike'
+                self.gui.reset_flags()
                 break
+
+            if msg is None:
+                continue
+
+            if msg.type == gst.MessageType.ERROR:
+                break
+            if msg.type == gst.MessageType.EOS:
+                if self.gui.is_repeated:
+                    self.go_to_time(0)
+                else:
+                    self.gui.set_time(0)
+                    break
 
         self.player.set_state(gst.State.NULL)
-        stopTime = time.time()
-        dur = stopTime - startTime
+        stop_time = time.time()
+        dur = stop_time - start_time
+
+        print("real "+str(duration)) # Это настоящее
+        print("fact "+str(dur))  # Это фактическое
+        print("player "+str(played_time))  # Это плеера
+
         yar.feedback(reason, dur, tid, aid, batch)
+
+    def go_to_time(self, seconds):
+        self.player.get_state(gst.CLOCK_TIME_NONE)
+        self.player.set_state(gst.State.PAUSED)
+        self.player.seek_simple(gst.Format.TIME, gst.SeekFlags.FLUSH, seconds * gst.SECOND)
+        self.player.get_state(gst.CLOCK_TIME_NONE)
+        pos = self.player.query_position(gst.Format.TIME)[1]
+        self.player.seek(1, gst.Format.TIME,
+                         gst.SeekFlags.FLUSH, gst.SeekType.SET, pos,
+                         gst.SeekType.NONE, -1)
+        self.player.set_state(gst.State.PLAYING)
+        self.gui.reset_flags()
