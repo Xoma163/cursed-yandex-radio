@@ -68,7 +68,7 @@ class Gui(QMainWindow):
         self.volume = 0.5
 
         self.init_gui()
-        self.init_GUI_Geometry()
+        self.init_gui_geometry()
         self.show()
 
     def set_song_info(self, artist, title, album_title, duration, image_link):
