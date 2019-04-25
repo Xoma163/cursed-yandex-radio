@@ -15,14 +15,13 @@ from cursedyar import main, close_app
 
 BUTTON_SIZE = [50, 40]
 BUTTON_SMALL_SIZE = [20, 20]
+BUTTON_SMALL_MARGIN = [5, 10]  # from [top,left/right]
 BUTTON_MARGIN = 55
 WINDOW_SIZE = [400, 250]
 
 _N_BUTTONS = 3
 _TOTAL = BUTTON_SIZE[0] * _N_BUTTONS + BUTTON_MARGIN * (_N_BUTTONS - 1)
-START_POS = (WINDOW_SIZE[0] - _TOTAL) / 2
-
-thread_worker = None
+START_POS_MAIN_BUTTONS = (WINDOW_SIZE[0] - _TOTAL) / 2
 
 
 class Gui(QMainWindow):
@@ -40,8 +39,8 @@ class Gui(QMainWindow):
         self.button_save = QtWidgets.QPushButton(self)
         self.button_share = QtWidgets.QPushButton(self)
         self.button_like = QtWidgets.QPushButton(self)
-        self.label_duration_0 = QtWidgets.QLabel(self)
-        self.label_duration_1 = QtWidgets.QLabel(self)
+        self.label_start_time = QtWidgets.QLabel(self)
+        self.label_finish_time = QtWidgets.QLabel(self)
         self.slider_volume = QtWidgets.QSlider(self)
         self.album_cover = QLabel(self)
         self.button_repeat = QtWidgets.QPushButton(self)
@@ -68,7 +67,8 @@ class Gui(QMainWindow):
         self.timeline = 0
         self.volume = 0.5
 
-        self.init_GUI()
+        self.init_gui()
+        self.init_GUI_Geometry()
         self.show()
 
     def set_song_info(self, artist, title, album_title, duration, image_link):
@@ -86,7 +86,7 @@ class Gui(QMainWindow):
         self.set_is_liked(False)
 
         m, s = self._get_time_from_seconds(duration)
-        self.label_duration_1.setText("%s:%s" % (m, s))
+        self.label_finish_time.setText("%s:%s" % (m, s))
 
         data = requests.get(image_link).content
         pixmap = QPixmap()
@@ -97,7 +97,7 @@ class Gui(QMainWindow):
         self.last_timeline_value = seconds
         self.slider_timeline.setValue(seconds)
         m, s = self._get_time_from_seconds(seconds)
-        self.label_duration_0.setText("%s:%s" % (m, s))
+        self.label_start_time.setText("%s:%s" % (m, s))
 
     @staticmethod
     def _get_time_from_seconds(seconds):
@@ -196,7 +196,7 @@ class Gui(QMainWindow):
     def closeEvent(self, args):
         close_app()
 
-    def init_GUI(self):
+    def init_gui(self):
         self.setWindowTitle("radio.yandex")
         self.setFixedSize(WINDOW_SIZE[0], WINDOW_SIZE[1])
 
@@ -214,90 +214,62 @@ class Gui(QMainWindow):
         font_small.setPointSize(13)
 
         # --- Song info labels ---#
-        self.album_cover.setGeometry(15, 15, 75, 75)
 
         self.label_title.setText("")
         # self.label_title.setWordWrap(True)
         self.label_title.setFont(font_medium)
-        self.label_title.setGeometry(100, 25, WINDOW_SIZE[0] - 100, 27)
 
         self.label_artist.setText("")
         self.label_artist.setFont(font_small)
-        self.label_artist.setGeometry(100, 60, WINDOW_SIZE[0] - 100, 20)
 
         # --- Time --- #
-        self.label_duration_0.setText("00:00")
-        self.label_duration_0.setFont(font_small)
-        self.label_duration_0.setGeometry(10, 95, WINDOW_SIZE[0] - 40, 30)
+        self.label_start_time.setText("00:00")
+        self.label_start_time.setFont(font_small)
 
-        self.label_duration_1.setText("00:00")
-        self.label_duration_1.setFont(font_small)
-        self.label_duration_1.setGeometry(WINDOW_SIZE[0] - 50, 95, WINDOW_SIZE[0] - 40, 30)
+        self.label_finish_time.setText("00:00")
+        self.label_finish_time.setFont(font_small)
 
         # --- Slider --- #
-        self.slider_timeline.setGeometry(20, 115, WINDOW_SIZE[0] - 40, 30)
         self.slider_timeline.valueChanged.connect(self.slider_timeline_changed)
 
         # --- Music control buttons --- #
         self.button_prev.setIcon(QIcon('media/prev.svg'))
         self.button_prev.setIconSize(QSize(BUTTON_SIZE[0], BUTTON_SIZE[1]))
-        self.button_prev.setGeometry(START_POS + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 0, 150, BUTTON_SIZE[0],
-                                     BUTTON_SIZE[1])
         self.button_prev.clicked.connect(self.button_prev_clicked)
 
         self.button_pause.setIcon(QIcon('media/pause.svg'))
         self.button_pause.setIconSize(QSize(BUTTON_SIZE[0] - 10, BUTTON_SIZE[1] - 10))
-        self.button_pause.setGeometry(START_POS + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 1, 150, BUTTON_SIZE[0],
-                                      BUTTON_SIZE[1])
         self.button_pause.clicked.connect(self.button_pause_clicked)
 
         self.button_next.setIcon(QIcon('media/next.svg'))
         self.button_next.setIconSize(QSize(BUTTON_SIZE[0], BUTTON_SIZE[1]))
-        self.button_next.setGeometry(START_POS + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 2, 150, BUTTON_SIZE[0],
-                                     BUTTON_SIZE[1])
         self.button_next.clicked.connect(self.button_next_clicked)
 
         # --- Extra buttons --- #
         self.button_dislike.setIcon(QIcon('media/dislike.svg'))
         self.button_dislike.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
-        self.button_dislike.setGeometry(30 + (10 + 20) * 0, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
-                                        BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
         self.button_dislike.clicked.connect(self.button_dislike_clicked)
 
         self.button_save.setIcon(QIcon('media/save.svg'))
         self.button_save.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
-        self.button_save.setGeometry(30 + (10 + 20) * 1, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
-                                     BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
         self.button_save.clicked.connect(self.button_save_clicked)
 
         self.button_share.setIcon(QIcon('media/share.svg'))
         self.button_share.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
-        self.button_share.setGeometry(30 + (10 + 20) * 2, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
-                                      BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
         self.button_share.clicked.connect(self.button_share_clicked)
-
 
         self.button_like.setIcon(QIcon('media/heart.svg'))
         self.button_like.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
-        self.button_like.setGeometry(30 + (10 + 20) * 3, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
-                                     BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
         self.button_like.clicked.connect(self.button_like_clicked)
 
         # --- Extra buttons 2 --- #
         self.button_repeat.setIcon(QIcon('media/repeat.svg'))
         self.button_repeat.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
-        self.button_repeat.setGeometry(WINDOW_SIZE[0] - 70, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
-                                       BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
         self.button_repeat.clicked.connect(self.button_repeat_clicked)
 
         self.button_shuffle.setIcon(QIcon('media/shuffle.svg'))
         self.button_shuffle.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
-        self.button_shuffle.setGeometry(WINDOW_SIZE[0] - 40, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
-                                        BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1])
         self.button_shuffle.clicked.connect(self.button_shuffle_clicked)
-
-        self.combo_tag.setGeometry(WINDOW_SIZE[0] - 2 * WINDOW_SIZE[0] / 3 + 20, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
-                                   WINDOW_SIZE[0] / 3, 20)
 
         f = open('stations.txt', 'r')
 
@@ -310,10 +282,61 @@ class Gui(QMainWindow):
         self.tag = self.combo_tag.currentText()
 
         # --- Volume --- #
-        self.slider_volume.setGeometry(WINDOW_SIZE[0] - 20, WINDOW_SIZE[1] - 100, 20, 80)
         self.slider_volume.setMaximum(100)
         self.slider_volume.setValue(50)
         self.slider_volume.valueChanged.connect(self.slider_volume_changed)
+
+    def init_gui_geometry(self):
+        self.album_cover.setGeometry(15, 15, 75, 75)
+        self.label_title.setGeometry(100, 25, WINDOW_SIZE[0] - 100, 27)
+        self.label_artist.setGeometry(100, 60, WINDOW_SIZE[0] - 100, 20)
+        self.label_start_time.setGeometry(10,  WINDOW_SIZE[1] / 2 - 40, WINDOW_SIZE[0] - 40, 30)
+        self.label_finish_time.setGeometry(WINDOW_SIZE[0] - 50,  WINDOW_SIZE[1] / 2 - 40, WINDOW_SIZE[0] - 40, 30)
+
+        self.slider_timeline.setGeometry(20, WINDOW_SIZE[1] / 2 - 15, WINDOW_SIZE[0] - 40, 30)
+
+        self.button_prev.setGeometry(START_POS_MAIN_BUTTONS + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 0,
+                                     WINDOW_SIZE[1] / 2 + 30,
+                                     BUTTON_SIZE[0],
+                                     BUTTON_SIZE[1])
+        self.button_pause.setGeometry(START_POS_MAIN_BUTTONS + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 1,
+                                      WINDOW_SIZE[1] / 2 + 30,
+                                      BUTTON_SIZE[0],
+                                      BUTTON_SIZE[1])
+        self.button_next.setGeometry(START_POS_MAIN_BUTTONS + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 2,
+                                     WINDOW_SIZE[1] / 2 + 30,
+                                     BUTTON_SIZE[0],
+                                     BUTTON_SIZE[1])
+        self.button_dislike.setGeometry(
+            BUTTON_SMALL_MARGIN[0] * 2 + (BUTTON_SMALL_SIZE[0] + BUTTON_SMALL_MARGIN[0]) * 0,
+            WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - BUTTON_SMALL_MARGIN[1],
+            BUTTON_SMALL_SIZE[0],
+            BUTTON_SMALL_SIZE[1])
+        self.button_save.setGeometry(BUTTON_SMALL_MARGIN[0] * 2 + (BUTTON_SMALL_SIZE[0] + BUTTON_SMALL_MARGIN[0]) * 1,
+                                     WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - BUTTON_SMALL_MARGIN[1],
+                                     BUTTON_SMALL_SIZE[0],
+                                     BUTTON_SMALL_SIZE[1])
+        self.button_share.setGeometry(BUTTON_SMALL_MARGIN[0] * 2 + (BUTTON_SMALL_SIZE[0] + BUTTON_SMALL_MARGIN[0]) * 2,
+                                      WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - BUTTON_SMALL_MARGIN[1],
+                                      BUTTON_SMALL_SIZE[0],
+                                      BUTTON_SMALL_SIZE[1])
+        self.button_like.setGeometry(BUTTON_SMALL_MARGIN[0] * 2 + (BUTTON_SMALL_SIZE[0] + BUTTON_SMALL_MARGIN[0]) * 3,
+                                     WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - BUTTON_SMALL_MARGIN[1],
+                                     BUTTON_SMALL_SIZE[0],
+                                     BUTTON_SMALL_SIZE[1])
+        self.button_repeat.setGeometry(WINDOW_SIZE[0] * 2 / 3 + (BUTTON_SMALL_MARGIN[0] + BUTTON_SMALL_SIZE[0]) * 2,
+                                       WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - BUTTON_SMALL_MARGIN[1],
+                                       BUTTON_SMALL_SIZE[0],
+                                       BUTTON_SMALL_SIZE[1])
+        self.button_shuffle.setGeometry(WINDOW_SIZE[0] * 2 / 3 + (BUTTON_SMALL_MARGIN[0] + BUTTON_SMALL_SIZE[0]) * 3,
+                                        WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - BUTTON_SMALL_MARGIN[1],
+                                        BUTTON_SMALL_SIZE[0],
+                                        BUTTON_SMALL_SIZE[1])
+
+        self.combo_tag.setGeometry(WINDOW_SIZE[0] - 2 * WINDOW_SIZE[0] / 3, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
+                                   WINDOW_SIZE[0] / 3, 20)
+
+        self.slider_volume.setGeometry(WINDOW_SIZE[0] - 20, WINDOW_SIZE[1] - 100, 20, 80)
 
 
 if __name__ == '__main__':
