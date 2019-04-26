@@ -37,7 +37,7 @@ class Player:
 
     def play(self, yar, track, info, batch, duration, len_last_played):
         tid, aid = track
-        url = yar.gettrack(tid, aid)
+        url = yar.get_track(tid, aid)
 
         self.player.set_property('uri', url)
         self.player.set_state(gst.State.PLAYING)

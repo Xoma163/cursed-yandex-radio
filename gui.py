@@ -10,7 +10,7 @@ import requests
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QFont, QIcon, QPixmap
-from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QSlider
+from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QSlider, QDialog
 
 from Logger import Logger
 from cursedyar import main, close_app
@@ -28,6 +28,11 @@ _TOTAL = BUTTON_SIZE[0] * _N_BUTTONS + BUTTON_MARGIN * (_N_BUTTONS - 1)
 class Gui(QMainWindow):
     def __init__(self):
         super(QMainWindow, self).__init__()
+
+        self.save_directory = os.getcwd()+"/saved"
+        self.max_last_played = 50
+        self.ignore_repeats = True
+        self.max_to_shuffle = 10
 
         self.log = Logger()
         self.is_playing = False
@@ -56,7 +61,6 @@ class Gui(QMainWindow):
         self.button_settings = QtWidgets.QPushButton(self)
 
         self.tag = ""
-        self.save_directory = "%s/saved/" % (os.getcwd())
         self.timeline = 0
         self.volume = 0.5
 
@@ -73,7 +77,13 @@ class Gui(QMainWindow):
 
         self.init_gui()
         self.init_gui_geometry()
-        self.load_settings()
+        try:
+            self.load_settings()
+        except:
+            pass
+
+        self.modal = ModalWindow(self)
+
         self.show()
         self.log.debug("GUI: Init complete")
 
@@ -173,6 +183,7 @@ class Gui(QMainWindow):
 
         # --- Settings --- #
         self.button_settings.setText("...")
+        self.button_settings.clicked.connect(self.button_settings_clicked)
 
     def init_gui_geometry(self):
         self.album_cover.setGeometry(15, 15, 75, 75)
@@ -356,6 +367,9 @@ class Gui(QMainWindow):
         self.toggle_icon_shuffle()
         self.log.debug("GUI: button_shuffle_clicked")
 
+    def button_settings_clicked(self):
+        self.modal.show()
+
     def slider_volume_changed(self):
         self.volume = self.slider_volume.value() / 100
         self.log.debug("GUI: slider_volume_changed. Volume = %s" % self.volume)
@@ -387,28 +401,32 @@ class Gui(QMainWindow):
         try:
             with open("settings.txt", 'rb') as f:
                 settings = pickle.load(f)
-                self.combo_tag.setCurrentText(settings['last-station'])
+                self.combo_tag.setCurrentText(settings['last_station'])
                 self.is_shuffle = settings['shuffle']
                 self.is_repeated = settings['repeat']
-                self.save_directory = settings['save-directory']
+                self.save_directory = settings['save_directory']
                 self.toggle_icon_shuffle()
                 self.toggle_icon_repeated()
                 self.volume = settings['volume']
-                print(self.volume)
-                self.slider_volume.setValue(self.volume*100)
-                self.log.debug("GUI: Settings opened")
+                self.slider_volume.setValue(self.volume * 100)
+                self.max_last_played = settings['max_last_played']
+                self.ignore_repeats = settings['ignore_repeats']
+                self.max_to_shuffle = settings['max_to_shuffle']
+                self.log.debug("GUI: Settings loaded")
         except:
-            self.log.debug("GUI: Settings not opened")
+            self.log.debug("GUI: Settings not loaded")
 
     def save_settings(self):
         # save settings
-        settings = {'last-station': self.combo_tag.currentText(),
+        settings = {'last_station': self.combo_tag.currentText(),
                     'shuffle': self.is_shuffle,
                     'repeat': self.is_repeated,
-                    'save-directory': self.save_directory,
-                    'volume': self.volume
+                    'save_directory': self.save_directory,
+                    'volume': self.volume,
+                    'max_last_played': self.max_last_played,
+                    'ignore_repeats': self.ignore_repeats,
+                    'max_to_shuffle':self.max_to_shuffle
                     }
-        print(self.volume)
 
         with open('settings.txt', 'wb') as f:
             pickle.dump(settings, f)
@@ -422,6 +440,55 @@ class Gui(QMainWindow):
         if s < 10:
             s = "0" + str(s)
         return m, s
+
+
+class ModalWindow(QMainWindow):
+    def __init__(self, main_gui):
+        self.main_gui = main_gui
+        super(QMainWindow, self).__init__()
+
+        self.MARGIN = 10
+
+        self.label_save = QtWidgets.QLabel(self)
+        self.label_save.setText("Save directory:")
+        self.label_save.setGeometry(self.MARGIN, self.MARGIN, 300 - self.MARGIN * 2, 20)
+
+        self.textbox_save = QtWidgets.QLineEdit(self)
+        self.textbox_save.setText(main_gui.save_directory)
+        self.textbox_save.setGeometry(self.MARGIN, 30, 300 - self.MARGIN * 2, 20)
+
+        self.label_max_last_played = QtWidgets.QLabel(self)
+        self.label_max_last_played.setText("Max queue len:")
+        self.label_max_last_played.setGeometry(self.MARGIN, 60, 300 - self.MARGIN * 2, 20)
+
+        self.textbox_max_last_played = QtWidgets.QLineEdit(self)
+        self.textbox_max_last_played.setText(str(main_gui.max_last_played))
+        self.textbox_max_last_played.setGeometry(self.MARGIN, 80, 300 - self.MARGIN * 2, 20)
+
+        self.label_ignore_repeats = QtWidgets.QLabel(self)
+        self.label_ignore_repeats.setText("Ignore repeats:")
+        self.label_ignore_repeats.setGeometry(self.MARGIN, 110, 300 - self.MARGIN * 2, 20)
+
+        self.checkbox_ignore_repeats = QtWidgets.QCheckBox(self)
+        self.checkbox_ignore_repeats.setGeometry(self.MARGIN + 95, 110, 300 - self.MARGIN * 2, 20)
+        self.checkbox_ignore_repeats.setChecked(main_gui.ignore_repeats)
+
+        self.label_max_to_shuffle = QtWidgets.QLabel(self)
+        self.label_max_to_shuffle.setText("Tracks to shuffle station:")
+        self.label_max_to_shuffle.setGeometry(self.MARGIN, 140, 300 - self.MARGIN * 2, 20)
+
+        self.textbox_max_to_shuffle = QtWidgets.QLineEdit(self)
+        self.textbox_max_to_shuffle.setText(str(main_gui.max_to_shuffle))
+        self.textbox_max_to_shuffle.setGeometry(self.MARGIN, 160, 300 - self.MARGIN * 2, 20)
+
+        self.setGeometry(self.MARGIN, 0, 300, 180 + self.MARGIN)
+
+    def closeEvent(self, args):
+        self.main_gui.save_directory = self.textbox_save.text()
+        self.main_gui.max_last_played = self.textbox_max_last_played.text()
+        self.main_gui.ignore_repeats = self.checkbox_ignore_repeats.isChecked()
+        self.main_gui.max_to_shuffle = self.textbox_max_to_shuffle.text()
+        close_app()
 
 
 if __name__ == '__main__':

@@ -9,9 +9,6 @@ import sys
 from client import YandexRadio
 from player import Player
 
-MAX_LAST_PLAYED_LEN = 50
-MAX_TRACKS_SHUFFLE = 2
-
 
 def main(gui):
     if len(sys.argv) > 1:
@@ -37,26 +34,29 @@ def main(gui):
 
         k = 0
         # No repeat tracks
-        while len(queue) == 0:
-            if k % 2 == 0:
-                queue = ya_radio.gettracks(last_track)
-            else:
-                queue = ya_radio.gettracks(None)
+        if gui.ignore_repeats:
+            queue = ya_radio.get_track_list(last_track)
+        else:
+            while len(queue) == 0:
+                if k % 2 == 0:
+                    queue = ya_radio.get_track_list(last_track)
+                else:
+                    queue = ya_radio.get_track_list(None)
 
-            list_to_delete = []
-            for i in range(len(queue)):
-                for j in range(len(last_played)):
-                    if queue[i][2] == last_played[j][2]:
-                        list_to_delete.append(i)
+                list_to_delete = []
+                for i in range(len(queue)):
+                    for j in range(len(last_played)):
+                        if queue[i][2] == last_played[j][2]:
+                            list_to_delete.append(i)
 
-            if len(list_to_delete) > 0:
-                print("#Tracks to delete: %s" % (len(list_to_delete)))
+                if len(list_to_delete) > 0:
+                    print("#Tracks to delete: %s" % (len(list_to_delete)))
 
-            list_to_delete = sorted(list(set(list_to_delete)), reverse=True)
+                list_to_delete = sorted(list(set(list_to_delete)), reverse=True)
 
-            for i in range(len(list_to_delete)):
-                queue.pop(list_to_delete[i])
-            k += 1
+                for i in range(len(list_to_delete)):
+                    queue.pop(list_to_delete[i])
+                k += 1
 
         # prev track
         if gui.prev_clicked:
@@ -83,8 +83,11 @@ def main(gui):
         pl.play(ya_radio, current_track, info, batch, dur, len(last_played))
         last_track = current_track
 
+        if len(last_played) > gui.last_played:
+            last_played = last_played[:-1]
+
         # Shuffle
-        if gui.is_shuffle and track_index >= MAX_TRACKS_SHUFFLE:
+        if gui.is_shuffle and track_index >= gui.max_to_shuffle:
             track_index = 0
             # ToDo: Это можно сделать умнее, узнай как
             rnd = random.randrange(0, gui.combo_tag.count(), 1)

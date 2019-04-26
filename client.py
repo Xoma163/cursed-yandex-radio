@@ -86,7 +86,7 @@ class YandexRadio:
             authdata = json.loads(resp.text)
             self.sign = authdata['csrf']
 
-    def gettracks(self, prev=None):
+    def get_track_list(self, prev=None):
         url = self.gate + '/tracks'
         params = {}
         if prev is not None:
@@ -149,7 +149,7 @@ class YandexRadio:
 
         return hashlib.md5(message.encode('ascii')).hexdigest()
 
-    def gettrack(self, tid, aid):
+    def get_track(self, tid, aid):
         url = self.api + 'track/%d:%d/radio-web-%s-direct/download/m' % (tid, aid, self.tag.replace('/', '-'))
         headers = {'X-Retpath-Y': 'https%3A%2F%2Fradio.yandex.ru%2F' + self.tag.replace('/', '%2F')}
 
