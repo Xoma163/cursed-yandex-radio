@@ -52,6 +52,9 @@ class Gui(QMainWindow):
         self.is_saved = False
         self.is_liked = False
         self.is_shuffle = False
+        self.timeline_released = False
+        self.timeline_pressed = False
+
         self.tag = ""
 
         self.prev_clicked = False
@@ -61,7 +64,7 @@ class Gui(QMainWindow):
         self.save_clicked = False
         self.share_clicked = False
         self.dislike_clicked = False
-        self.timeline_changed = False
+        self.repeat_clicked = False
 
         self.last_timeline_value = 0
         self.timeline = 0
@@ -173,19 +176,17 @@ class Gui(QMainWindow):
         self.like_clicked = False
         self.save_clicked = False
         self.dislike_clicked = False
-        self.timeline_changed = False
+        self.timeline_released = False
         self.repeat_clicked = False
         self.share_clicked = False
+        self.timeline_pressed = False
 
-    def slider_timeline_changed(self):
-        # TODO: Сделай что-нибудь поадекватнее.
-        #  Проблема в том, что при обновлении текущей продолжительности трека эта фигофина срабатывает.
-        #  Этот костыль фиксит проблему, типа, если на секундочку дельта, то не срабатываем.
-        #  Хотя, не такой уж и костыль, видали похуже
-        delta_time = 1  # sec
-        if self.slider_timeline.value() > self.last_timeline_value + delta_time or self.slider_timeline.value() < self.last_timeline_value - delta_time:
-            self.timeline_changed = True
-            self.timeline = self.slider_timeline.value()
+    def slider_timeline_released(self):
+        self.timeline_released = True
+        self.timeline = self.slider_timeline.value()
+
+    def slider_timeline_pressed(self):
+        self.timeline_pressed = True
 
     def slider_volume_changed(self):
         self.volume = self.slider_volume.value() / 100
@@ -230,7 +231,8 @@ class Gui(QMainWindow):
         self.label_finish_time.setFont(font_small)
 
         # --- Slider --- #
-        self.slider_timeline.valueChanged.connect(self.slider_timeline_changed)
+        self.slider_timeline.sliderPressed.connect(self.slider_timeline_pressed)
+        self.slider_timeline.sliderReleased.connect(self.slider_timeline_released)
 
         # --- Music control buttons --- #
         self.button_prev.setIcon(QIcon('media/prev.svg'))
@@ -290,8 +292,8 @@ class Gui(QMainWindow):
         self.album_cover.setGeometry(15, 15, 75, 75)
         self.label_title.setGeometry(100, 25, WINDOW_SIZE[0] - 100, 27)
         self.label_artist.setGeometry(100, 60, WINDOW_SIZE[0] - 100, 20)
-        self.label_start_time.setGeometry(10,  WINDOW_SIZE[1] / 2 - 40, WINDOW_SIZE[0] - 40, 30)
-        self.label_finish_time.setGeometry(WINDOW_SIZE[0] - 50,  WINDOW_SIZE[1] / 2 - 40, WINDOW_SIZE[0] - 40, 30)
+        self.label_start_time.setGeometry(10, WINDOW_SIZE[1] / 2 - 40, WINDOW_SIZE[0] - 40, 30)
+        self.label_finish_time.setGeometry(WINDOW_SIZE[0] - 50, WINDOW_SIZE[1] / 2 - 40, WINDOW_SIZE[0] - 40, 30)
 
         self.slider_timeline.setGeometry(20, WINDOW_SIZE[1] / 2 - 15, WINDOW_SIZE[0] - 40, 30)
 

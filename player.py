@@ -10,8 +10,6 @@ import sys
 import time
 import requests
 # Todo: поделиться треком
-import clipboard
-
 
 class Player:
     def __init__(self, gui):
@@ -49,16 +47,18 @@ class Player:
         self.gui.set_song_info(info[2], info[0], info[1], int(duration / 1000), info[3])
 
         while True:
+            if self.gui.timeline_released:
+                self.go_to_time(self.gui.timeline)
+                self.gui.reset_flags()
+
+            if not self.gui.timeline_pressed:
+                ret, played_time = self.player.query_position(gst.Format.TIME)
+                if played_time != 0:
+                    self.gui.set_time(int(played_time / 10 ** 9))
 
             self.player.set_property('volume', self.gui.volume)
-            ret, played_time = self.player.query_position(gst.Format.TIME)
-            if played_time != 0:
-                self.gui.set_time(int(played_time/ 10**9))
 
             msg = bus.timed_pop_filtered(100 * gst.MSECOND, gst.MessageType.ERROR | gst.MessageType.EOS)
-
-            if self.gui.timeline_changed:
-                self.go_to_time(self.gui.timeline)
 
             if self.gui.prev_clicked:
                 if len_last_played >= 2:
@@ -96,7 +96,6 @@ class Player:
                 self.gui.set_is_saved(True)
 
             if self.gui.share_clicked:
-                # clipboard.copy(url)
                 print(url)
                 self.gui.reset_flags()
 
@@ -121,9 +120,9 @@ class Player:
         stop_time = time.time()
         dur = stop_time - start_time
 
-        print("real " + str(duration))  # Это настоящее
-        print("fact " + str(dur))  # Это фактическое
-        print("player " + str(played_time))  # Это плеера
+        # print("real " + str(duration))  # Это настоящее
+        # print("fact " + str(dur))  # Это фактическое
+        # print("player " + str(played_time))  # Это плеера
 
         yar.feedback(reason, dur, tid, aid, batch)
 
