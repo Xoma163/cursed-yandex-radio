@@ -5,43 +5,10 @@ import pickle
 import requests
 import json
 import time
-import sys
+from Logger import Logger
+
 import hashlib
 
-
-class Logger:
-    def __init__(self):
-        self.DEBUG = True
-        self.STATUS = True
-        self.FEEDBACK = True
-        self.ERROR = True
-
-    def timestamp(self):
-        return time.strftime('[%d %b %Y %H:%M:%S] ', time.localtime())
-
-    def debug(self, info):
-        if Logger.debug:
-            with open('debug.log', 'a') as f:
-                if sys.version_info[0] < 3: info = info.encode('utf-8')
-                f.write(self.timestamp() + info + '\n')
-
-    def status(self, info):
-        if self.STATUS:
-            with open('status.log', 'a') as f:
-                if sys.version_info[0] < 3: info = info.encode('utf-8')
-                f.write(self.timestamp() + info + '\n')
-
-    def feedback(self, info):
-        if self.FEEDBACK:
-            with open('feedback.log', 'a') as f:
-                if sys.version_info[0] < 3: info = info.encode('utf-8')
-                f.write(self.timestamp() + info + '\n')
-
-    def error(self, info):
-        if self.ERROR:
-            with open('error.log', 'a') as f:
-                if sys.version_info[0] < 3: info = info.encode('utf-8')
-                f.write(self.timestamp() + info + '\n')
 
 
 class YandexRadio:
