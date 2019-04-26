@@ -87,7 +87,7 @@ class Player:
                 self.gui.set_is_liked(True)
 
             if self.gui.save_clicked:
-                filename = "%s/saved/%s - %s.mp3" % (os.getcwd(), info[2], info[0])
+                filename = "%s%s - %s.mp3" % (self.gui.save_directory, info[2], info[0])
 
                 myfile = requests.get(url)
                 with open(filename, "wb") as file:
@@ -119,10 +119,6 @@ class Player:
         self.player.set_state(gst.State.NULL)
         stop_time = time.time()
         dur = stop_time - start_time
-
-        # print("real " + str(duration))  # Это настоящее
-        # print("fact " + str(dur))  # Это фактическое
-        # print("player " + str(played_time))  # Это плеера
 
         yar.feedback(reason, dur, tid, aid, batch)
 
