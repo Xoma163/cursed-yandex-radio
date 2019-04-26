@@ -49,11 +49,11 @@ class Gui(QMainWindow):
         self.button_save = QtWidgets.QPushButton(self)
         self.button_share = QtWidgets.QPushButton(self)
         self.button_like = QtWidgets.QPushButton(self)
-
         self.combo_tag = QtWidgets.QComboBox(self)
         self.button_repeat = QtWidgets.QPushButton(self)
         self.button_shuffle = QtWidgets.QPushButton(self)
         self.slider_volume = QtWidgets.QSlider(self)
+        self.button_settings = QtWidgets.QPushButton(self)
 
         self.tag = ""
         self.save_directory = "%s/saved/" % (os.getcwd())
@@ -154,6 +154,7 @@ class Gui(QMainWindow):
         self.button_shuffle.setIconSize(QSize(BUTTON_SMALL_SIZE[0], BUTTON_SMALL_SIZE[1]))
         self.button_shuffle.clicked.connect(self.button_shuffle_clicked)
 
+        # --- Stations --- #
         f = open('stations.txt', 'r')
 
         for line in f:
@@ -169,6 +170,9 @@ class Gui(QMainWindow):
         self.slider_volume.setValue(50)
         self.slider_volume.valueChanged.connect(self.slider_volume_changed)
         self.log.debug("GUI: Init GUI complete")
+
+        # --- Settings --- #
+        self.button_settings.setText("...")
 
     def init_gui_geometry(self):
         self.album_cover.setGeometry(15, 15, 75, 75)
@@ -220,7 +224,9 @@ class Gui(QMainWindow):
         self.combo_tag.setGeometry(WINDOW_SIZE[0] - 2 * WINDOW_SIZE[0] / 3, WINDOW_SIZE[1] - BUTTON_SMALL_SIZE[1] - 10,
                                    WINDOW_SIZE[0] / 3, 20)
 
-        self.slider_volume.setGeometry(WINDOW_SIZE[0] - 20, WINDOW_SIZE[1] - 100, 20, 80)
+        self.slider_volume.setGeometry(WINDOW_SIZE[0] - 20, WINDOW_SIZE[1] - 110, 20, 80)
+
+        self.button_settings.setGeometry(WINDOW_SIZE[0] - 15, WINDOW_SIZE[1] - 15, 15, 15)
 
         self.log.debug("GUI: Init GUI_geometry complete")
 
@@ -388,6 +394,8 @@ class Gui(QMainWindow):
                 self.toggle_icon_shuffle()
                 self.toggle_icon_repeated()
                 self.volume = settings['volume']
+                print(self.volume)
+                self.slider_volume.setValue(self.volume*100)
                 self.log.debug("GUI: Settings opened")
         except:
             self.log.debug("GUI: Settings not opened")
@@ -400,6 +408,7 @@ class Gui(QMainWindow):
                     'save-directory': self.save_directory,
                     'volume': self.volume
                     }
+        print(self.volume)
 
         with open('settings.txt', 'wb') as f:
             pickle.dump(settings, f)

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # coding: utf8
 
-
 from __future__ import absolute_import
 
 import random
