@@ -51,7 +51,7 @@ def main(gui):
                         list_to_delete.append(i)
 
             if len(list_to_delete) > 0:
-                print("#Tracks to delete: " + str(len(list_to_delete)))
+                print("#Tracks to delete: %s" % (len(list_to_delete)))
 
             list_to_delete = sorted(list(set(list_to_delete)), reverse=True)
 

@@ -73,7 +73,7 @@ class Gui(QMainWindow):
 
         self.init_gui()
         self.init_gui_geometry()
-        self.open_settings()
+        self.load_settings()
         self.show()
         self.log.debug("GUI: Init complete")
 
@@ -243,36 +243,21 @@ class Gui(QMainWindow):
         m, s = self._get_time_from_seconds(duration)
         self.label_finish_time.setText("%s:%s" % (m, s))
 
-        data = requests.get(image_link).content
-        pixmap = QPixmap()
-        pixmap.loadFromData(data)
-        self.album_cover.setPixmap(pixmap)
+        if image_link != "no-cover":
+            data = requests.get(image_link).content
+            pixmap = QPixmap()
+            pixmap.loadFromData(data)
+            self.album_cover.setPixmap(pixmap)
+        else:
+            pixmap = QPixmap()
+            self.album_cover.setPixmap(pixmap)
+
         self.log.debug("GUI: Set song info complete: %s-%s (%s). %s sec" % (artist, title, album_title, duration))
 
     def set_time(self, seconds):
         self.slider_timeline.setValue(seconds)
         m, s = self._get_time_from_seconds(seconds)
         self.label_start_time.setText("%s:%s" % (m, s))
-
-    def toggle_icon_shuffle(self):
-        if self.is_shuffle:
-            self.button_shuffle.setIcon(QIcon('media/shuffle_active.png'))
-        else:
-            self.button_shuffle.setIcon(QIcon('media/shuffle.svg'))
-
-    # def set_is_shuffle(self):
-
-    # self.log.debug("GUI: set is_shuffle = %s" % self.is_shuffle)
-
-    def toggle_icon_repeated(self):
-        if self.is_repeated:
-            self.button_repeat.setIcon(QIcon('media/repeat_active.png'))
-        else:
-            self.button_repeat.setIcon(QIcon('media/repeat.svg'))
-
-    # def set_is_repeated(self):
-    #
-    #     self.log.debug("GUI: set is_repeated = %s" % self.is_repeated)
 
     def set_is_saved(self, status):
         self.is_saved = status
@@ -292,11 +277,24 @@ class Gui(QMainWindow):
             self.button_like.setIcon(QIcon('media/heart.svg'))
         self.log.debug("GUI: set is_liked = %s" % self.is_liked)
 
+    # togglers
     def toggle_icon_paused(self):
         if self.is_playing:
             self.button_pause.setIcon(QIcon('media/play.svg'))
         else:
             self.button_pause.setIcon(QIcon('media/pause.svg'))
+
+    def toggle_icon_shuffle(self):
+        if self.is_shuffle:
+            self.button_shuffle.setIcon(QIcon('media/shuffle_active.png'))
+        else:
+            self.button_shuffle.setIcon(QIcon('media/shuffle.svg'))
+
+    def toggle_icon_repeated(self):
+        if self.is_repeated:
+            self.button_repeat.setIcon(QIcon('media/repeat_active.png'))
+        else:
+            self.button_repeat.setIcon(QIcon('media/repeat.svg'))
 
     # events
     def slider_timeline_pressed(self):
@@ -379,7 +377,7 @@ class Gui(QMainWindow):
         self.log.debug("GUI: reset_flags")
 
     # settings
-    def open_settings(self):
+    def load_settings(self):
         try:
             with open("settings.txt", 'rb') as f:
                 settings = pickle.load(f)
@@ -387,8 +385,8 @@ class Gui(QMainWindow):
                 self.is_shuffle = settings['shuffle']
                 self.is_repeated = settings['repeat']
                 self.save_directory = settings['save-directory']
-                self.set_is_shuffle()
-                self.set_is_repeated()
+                self.toggle_icon_shuffle()
+                self.toggle_icon_repeated()
                 self.volume = settings['volume']
                 self.log.debug("GUI: Settings opened")
         except:

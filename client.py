@@ -111,7 +111,11 @@ class YandexRadio:
                 continue
             track = z['track']
             album = track['albums'][0]
-            album_cover = "http://" + album['coverUri'][:-2] + "75x75"
+            try:
+                album_cover = "http://" + album['coverUri'][:-2] + "75x75"
+            except:
+                album_cover = "no-cover"
+
             artists = ', '.join([x['name'] for x in track['artists']])
             tid = int(track['id'])
             aid = int(album['id'])
