@@ -10,7 +10,7 @@ import requests
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QFont, QIcon, QPixmap
-from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QSlider, QDialog
+from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QSlider
 
 from Logger import Logger
 from cursedyar import main, close_app
@@ -32,7 +32,7 @@ class Gui(QMainWindow):
     def __init__(self):
         super(QMainWindow, self).__init__()
 
-        self.save_directory = os.getcwd()+"/saved"
+        self.save_directory = os.getcwd()+"/saved/"
         self.max_last_played = 50
         self.ignore_repeats = True
         self.max_to_shuffle = 10
