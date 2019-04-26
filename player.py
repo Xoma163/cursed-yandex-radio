@@ -50,12 +50,11 @@ class Player:
 
         while True:
             if self.gui.timeline_released:
-                self.log.debug("timeline_released")
+                self.log.debug("PLAYER: timeline_released")
                 self.go_to_time(self.gui.timeline)
                 self.gui.reset_flags()
 
             if not self.gui.timeline_pressed:
-                self.log.debug("timeline_pressed")
                 ret, played_time = self.player.query_position(gst.Format.TIME)
                 if played_time != 0:
                     self.gui.set_time(int(played_time / 10 ** 9))
@@ -65,29 +64,28 @@ class Player:
             msg = bus.timed_pop_filtered(100 * gst.MSECOND, gst.MessageType.ERROR | gst.MessageType.EOS)
 
             if self.gui.prev_clicked:
-                self.log.debug("prev_clicked")
+                self.log.debug("PLAYER: prev_clicked")
                 if len_last_played >= 2:
                     break
                 else:
                     self.gui.reset_flags()
 
             if self.gui.pause_clicked:
-                self.log.debug("pause_clicked")
-                self.is_playing = not self.is_playing
-                if self.is_playing:
+                self.log.debug("PLAYER: pause_clicked")
+                if self.gui.is_playing:
                     self.player.set_state(gst.State.PLAYING)
                 else:
                     self.player.set_state(gst.State.PAUSED)
                 self.gui.reset_flags()
 
             if self.gui.next_clicked:
-                self.log.debug("next_clicked")
+                self.log.debug("PLAYER: next_clicked")
                 reason = 'skip'
                 self.gui.reset_flags()
                 break
 
             if self.gui.like_clicked:
-                self.log.debug("like_clicked")
+                self.log.debug("PLAYER: like_clicked")
                 evTime = time.time()
                 dur = evTime - start_time
                 yar.feedback('like', dur, tid, aid, batch)
@@ -95,7 +93,7 @@ class Player:
                 self.gui.set_is_liked(True)
 
             if self.gui.save_clicked:
-                self.log.debug("save_clicked")
+                self.log.debug("PLAYER: save_clicked")
                 filename = "%s%s - %s.mp3" % (self.gui.save_directory, info[2], info[0])
 
                 myfile = requests.get(url)
@@ -105,12 +103,12 @@ class Player:
                 self.gui.set_is_saved(True)
 
             if self.gui.share_clicked:
-                self.log.debug("share_clicked")
+                self.log.debug("PLAYER: share_clicked")
                 print(url)
                 self.gui.reset_flags()
 
             if self.gui.dislike_clicked:
-                self.log.debug("dislike_clicked")
+                self.log.debug("PLAYER: dislike_clicked")
                 reason = 'dislike'
                 self.gui.reset_flags()
                 break
@@ -134,7 +132,7 @@ class Player:
         yar.feedback(reason, dur, tid, aid, batch)
 
     def go_to_time(self, seconds):
-        self.log.debug("go_to_time: %s seconds" % seconds)
+        self.log.debug("PLAYER: go_to_time: %s seconds" % seconds)
         self.player.get_state(gst.CLOCK_TIME_NONE)
         self.player.set_state(gst.State.PAUSED)
         self.player.seek_simple(gst.Format.TIME, gst.SeekFlags.FLUSH, seconds * gst.SECOND)

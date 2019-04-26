@@ -10,7 +10,6 @@ from Logger import Logger
 import hashlib
 
 
-
 class YandexRadio:
     def __init__(self, tag):
         self.log = Logger()
@@ -65,7 +64,7 @@ class YandexRadio:
                 cookies = pickle.load(f)
         except:
             pass
-        self.log.debug("Cookies = " + str(cookies))
+        self.log.debug("CLIENT: Cookies = " + str(cookies))
 
         self.session = requests.Session()
         if cookies:
@@ -78,12 +77,11 @@ class YandexRadio:
                                 params=self.make_params(get=True),
                                 headers=self.make_headers(headers, get=True)
                                 )
-        # self.ui.status('Auth')
-        self.log.debug("Auth")
+        self.log.debug("CLIENT: Auth")
 
-        self.log.debug('Auth ' + str(resp.status_code))
+        self.log.debug('CLIENT: Auth ' + str(resp.status_code))
         if resp.status_code != 200:
-            self.log.error('Auth failed: ' + resp.text)
+            self.log.debug('CLIENT: Auth failed: ' + resp.text)
         else:
             authdata = json.loads(resp.text)
             self.sign = authdata['csrf']
@@ -102,10 +100,10 @@ class YandexRadio:
                                 params=self.make_params(params, get=True),
                                 headers=self.make_headers(headers, get=True)
                                 )
-        self.log.debug("Get queue")
+        self.log.debug("CLIENT: Get queue")
         if resp.status_code != 200:
-            self.log.debug(resp.text)
-            self.log.debug(8, 'tracks: ' + resp.text)
+            self.log.debug("CLIENT: " + str(resp.text))
+            self.log.debug("CLIENT: tracks: " + str(resp.text))
         d = json.loads(resp.text)
         tracks = []
         for z in d['tracks']:
@@ -138,14 +136,14 @@ class YandexRadio:
                               headers=self.make_headers(headers),
                               )
 
-        self.log.debug("Post radioStarted")
+        self.log.debug("CLIENT: Post radioStarted")
         if r.status_code != 202:
-            self.log.debug('radioStarted: ' + r.text)
+            self.log.debug('CLIENT: radioStarted: ' + r.text)
 
     def hashify(self, s):
         message = 'XGRlBW9FXlekgbPrRHuSiA' + s.replace('\r\n', '\n')
 
-        return hashlib.md5(message.encode('ascii')).hexdigest();
+        return hashlib.md5(message.encode('ascii')).hexdigest()
 
     def gettrack(self, tid, aid):
         url = self.api + 'track/%d:%d/radio-web-%s-direct/download/m' % (tid, aid, self.tag.replace('/', '-'))
@@ -156,9 +154,9 @@ class YandexRadio:
                                 headers=self.make_headers(headers, get=True)
                                 )
 
-        self.log.debug('Ask for download')
+        self.log.debug('CLIENT: Ask for download')
         if resp.status_code != 200:
-            self.log.debug('Ask for download failed ' + resp.text)
+            self.log.debug('CLIENT: Ask for download failed ' + resp.text)
         meta = json.loads(resp.text)
 
         self.radio_started(tid, aid)
@@ -168,7 +166,7 @@ class YandexRadio:
                                 params=self.make_params({'format': 'json'}, get=True),
                                 headers=self.make_headers(headers, get=True)
                                 )
-        self.log.debug('Get track url')
+        self.log.debug('CLIENT: Get track url')
         d = json.loads(resp.text)
         n = self.hashify(d['path'][1:] + d['s'])
         path = 'http://' + d['host'] + '/get-' + meta['codec'] + '/' + \
@@ -193,9 +191,9 @@ class YandexRadio:
                               headers=self.make_headers(headers),
                               )
 
-        self.log.debug('Post trackStarted')
+        self.log.debug('CLIENT: Post trackStarted')
         if r.status_code != 202:
-            self.log.debug('trackStarted: ' + r.text)
+            self.log.debug('CLIENT: trackStarted: ' + r.text)
 
     def feedback(self, reason, dur, tid, aid, batch):
         url = self.gate + '/feedback/' + reason + '/%d:%d' % (tid, aid)
@@ -214,10 +212,10 @@ class YandexRadio:
                               headers=self.make_headers(headers),
                               )
 
-        self.log.debug(reason + ' totalPlayed = ' + str(dur) + 's')
-        self.log.debug('Post feedback')
+        self.log.debug("CLIENT: " + reason + ' totalPlayed = ' + str(dur) + 's')
+        self.log.debug('CLIENT: Post feedback')
         if r.status_code != 202:
-            self.log.debug(reason + ': ' + r.text)
+            self.log.debug("CLIENT: " + reason + ': ' + r.text)
 
     def save_cookies(self):
         cookies = self.session.cookies
