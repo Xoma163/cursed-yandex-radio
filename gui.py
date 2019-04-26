@@ -15,11 +15,14 @@ from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QSlider, QDialog
 from Logger import Logger
 from cursedyar import main, close_app
 
-BUTTON_SIZE = [50, 40]
-BUTTON_SMALL_SIZE = [20, 20]
-BUTTON_SMALL_MARGIN = [5, 10]  # from [top,left/right]
-BUTTON_MARGIN = 55
+
 WINDOW_SIZE = [400, 250]
+
+K = (WINDOW_SIZE[0]*WINDOW_SIZE[1]/400/250) ** (1/2)
+BUTTON_SIZE = [50*K, 40*K]
+BUTTON_SMALL_SIZE = [20*K, 20*K]
+BUTTON_SMALL_MARGIN = [5*K, 10*K]  # from [top,left/right]
+BUTTON_MARGIN = 55*K
 
 _N_BUTTONS = 3
 _TOTAL = BUTTON_SIZE[0] * _N_BUTTONS + BUTTON_MARGIN * (_N_BUTTONS - 1)
@@ -95,11 +98,11 @@ class Gui(QMainWindow):
         # --- Fonts --- #
         font_big = QFont()
         font_big.setFamily("Arial")
-        font_big.setPointSize(26)
+        font_big.setPointSize(24)
 
         font_medium = QFont()
         font_medium.setFamily("Arial")
-        font_medium.setPointSize(18)
+        font_medium.setPointSize(16)
 
         font_small = QFont()
         font_small.setFamily("Arial")
@@ -107,18 +110,12 @@ class Gui(QMainWindow):
 
         # --- Song info labels ---#
 
-        self.label_title.setText("")
         # self.label_title.setWordWrap(True)
         self.label_title.setFont(font_medium)
-
-        self.label_artist.setText("")
         self.label_artist.setFont(font_small)
 
         # --- Time --- #
-        self.label_start_time.setText("00:00")
         self.label_start_time.setFont(font_small)
-
-        self.label_finish_time.setText("00:00")
         self.label_finish_time.setFont(font_small)
 
         # --- Slider --- #
@@ -189,10 +186,10 @@ class Gui(QMainWindow):
         self.album_cover.setGeometry(15, 15, 75, 75)
         self.label_title.setGeometry(100, 25, WINDOW_SIZE[0] - 100, 27)
         self.label_artist.setGeometry(100, 60, WINDOW_SIZE[0] - 100, 20)
-        self.label_start_time.setGeometry(10, WINDOW_SIZE[1] / 2 - 40, WINDOW_SIZE[0] - 40, 30)
-        self.label_finish_time.setGeometry(WINDOW_SIZE[0] - 50, WINDOW_SIZE[1] / 2 - 40, WINDOW_SIZE[0] - 40, 30)
+        self.label_start_time.setGeometry(10, WINDOW_SIZE[1] / 2 - 20, WINDOW_SIZE[0] - 40, 30)
+        self.label_finish_time.setGeometry(WINDOW_SIZE[0] - 50, WINDOW_SIZE[1] / 2 - 20, WINDOW_SIZE[0] - 40, 30)
 
-        self.slider_timeline.setGeometry(20, WINDOW_SIZE[1] / 2 - 15, WINDOW_SIZE[0] - 40, 30)
+        self.slider_timeline.setGeometry(20, WINDOW_SIZE[1] / 2, WINDOW_SIZE[0] - 40, 30)
 
         self.button_prev.setGeometry((WINDOW_SIZE[0] - _TOTAL) / 2 + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 0,
                                      WINDOW_SIZE[1] / 2 + 30,
@@ -485,9 +482,9 @@ class ModalWindow(QMainWindow):
 
     def closeEvent(self, args):
         self.main_gui.save_directory = self.textbox_save.text()
-        self.main_gui.max_last_played = self.textbox_max_last_played.text()
+        self.main_gui.max_last_played = int(self.textbox_max_last_played.text())
         self.main_gui.ignore_repeats = self.checkbox_ignore_repeats.isChecked()
-        self.main_gui.max_to_shuffle = self.textbox_max_to_shuffle.text()
+        self.main_gui.max_to_shuffle = int(self.textbox_max_to_shuffle.text())
         close_app()
 
 

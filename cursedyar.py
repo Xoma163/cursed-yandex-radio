@@ -29,7 +29,7 @@ def main(gui):
     # ToDo: Можно придумать что-нибудь более логичное
     while not pl.terminate:
         # No memory overflow
-        if len(last_played) > MAX_LAST_PLAYED_LEN:
+        if len(last_played) > int(gui.max_last_played):
             last_played.pop(0)
 
         k = 0
@@ -82,9 +82,6 @@ def main(gui):
 
         pl.play(ya_radio, current_track, info, batch, dur, len(last_played))
         last_track = current_track
-
-        if len(last_played) > gui.last_played:
-            last_played = last_played[:-1]
 
         # Shuffle
         if gui.is_shuffle and track_index >= gui.max_to_shuffle:
