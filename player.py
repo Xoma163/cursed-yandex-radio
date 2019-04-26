@@ -2,6 +2,8 @@
 # coding: utf8
 
 import os
+import threading
+
 import gi
 
 gi.require_version('Gst', '1.0')
@@ -11,6 +13,7 @@ import time
 import requests
 
 from Logger import Logger
+
 
 class Player:
     def __init__(self, gui):
@@ -94,13 +97,8 @@ class Player:
 
             if self.gui.save_clicked:
                 self.log.debug("PLAYER: save_clicked")
-                filename = "%s%s - %s.mp3" % (self.gui.save_directory, info[2], info[0])
-
-                myfile = requests.get(url)
-                with open(filename, "wb") as file:
-                    file.write(myfile.content)
+                threading.Thread(target=self.save_music, args=(info[2], info[0], url,)).start()
                 self.gui.reset_flags()
-                self.gui.set_is_saved(True)
 
             if self.gui.share_clicked:
                 self.log.debug("PLAYER: share_clicked")
@@ -143,3 +141,12 @@ class Player:
                          gst.SeekType.NONE, -1)
         self.player.set_state(gst.State.PLAYING)
         self.gui.reset_flags()
+
+    def save_music(self, artist, title, url):
+        filename = "%s%s - %s.mp3" % (self.gui.save_directory,artist,title)
+
+        myfile = requests.get(url)
+        with open(filename, "wb") as file:
+            file.write(myfile.content)
+        self.gui.set_is_saved(True)
+

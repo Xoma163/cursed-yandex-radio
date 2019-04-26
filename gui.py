@@ -226,6 +226,7 @@ class Gui(QMainWindow):
 
     # setters
     def set_song_info(self, artist, title, album_title, duration, image_link):
+        self.is_playing = True
         self.label_artist.setText("%s (%s)" % (artist, album_title))
         self.label_title.setText(title)
         self.slider_timeline.setMaximum(duration)
@@ -253,19 +254,25 @@ class Gui(QMainWindow):
         m, s = self._get_time_from_seconds(seconds)
         self.label_start_time.setText("%s:%s" % (m, s))
 
-    def set_is_shuffle(self):
+    def toggle_icon_shuffle(self):
         if self.is_shuffle:
             self.button_shuffle.setIcon(QIcon('media/shuffle_active.png'))
         else:
             self.button_shuffle.setIcon(QIcon('media/shuffle.svg'))
-        self.log.debug("GUI: set is_shuffle = %s" % self.is_shuffle)
 
-    def set_is_repeated(self):
+    # def set_is_shuffle(self):
+
+    # self.log.debug("GUI: set is_shuffle = %s" % self.is_shuffle)
+
+    def toggle_icon_repeated(self):
         if self.is_repeated:
             self.button_repeat.setIcon(QIcon('media/repeat_active.png'))
         else:
             self.button_repeat.setIcon(QIcon('media/repeat.svg'))
-        self.log.debug("GUI: set is_repeated = %s" % self.is_repeated)
+
+    # def set_is_repeated(self):
+    #
+    #     self.log.debug("GUI: set is_repeated = %s" % self.is_repeated)
 
     def set_is_saved(self, status):
         self.is_saved = status
@@ -285,12 +292,11 @@ class Gui(QMainWindow):
             self.button_like.setIcon(QIcon('media/heart.svg'))
         self.log.debug("GUI: set is_liked = %s" % self.is_liked)
 
-    def set_paused(self):
+    def toggle_icon_paused(self):
         if self.is_playing:
             self.button_pause.setIcon(QIcon('media/play.svg'))
         else:
             self.button_pause.setIcon(QIcon('media/pause.svg'))
-        self.log.debug("GUI: set is_playing = %s" % self.is_playing)
 
     # events
     def slider_timeline_pressed(self):
@@ -308,8 +314,8 @@ class Gui(QMainWindow):
 
     def button_pause_clicked(self):
         self.pause_clicked = True
+        self.toggle_icon_paused()
         self.is_playing = not self.is_playing
-        self.set_paused()
         self.log.debug("GUI: button_pause_clicked")
 
     def button_next_clicked(self):
@@ -338,12 +344,12 @@ class Gui(QMainWindow):
 
     def button_repeat_clicked(self):
         self.is_repeated = not self.is_repeated
-        self.set_is_repeated()
+        self.toggle_icon_repeated()
         self.log.debug("GUI: button_repeat_clicked")
 
     def button_shuffle_clicked(self):
         self.is_shuffle = not self.is_shuffle
-        self.set_is_shuffle()
+        self.toggle_icon_shuffle()
         self.log.debug("GUI: button_shuffle_clicked")
 
     def slider_volume_changed(self):
