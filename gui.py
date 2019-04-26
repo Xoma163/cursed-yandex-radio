@@ -2,6 +2,7 @@
 # coding: utf8
 
 import os
+import pickle
 import sys
 import threading
 
@@ -21,7 +22,6 @@ WINDOW_SIZE = [400, 250]
 
 _N_BUTTONS = 3
 _TOTAL = BUTTON_SIZE[0] * _N_BUTTONS + BUTTON_MARGIN * (_N_BUTTONS - 1)
-START_POS_MAIN_BUTTONS = (WINDOW_SIZE[0] - _TOTAL) / 2
 
 
 class Gui(QMainWindow):
@@ -56,6 +56,7 @@ class Gui(QMainWindow):
         self.timeline_pressed = False
 
         self.tag = ""
+        self.save_directory = "%s/saved/" % (os.getcwd())
 
         self.prev_clicked = False
         self.pause_clicked = False
@@ -72,7 +73,22 @@ class Gui(QMainWindow):
 
         self.init_gui()
         self.init_gui_geometry()
+
+        self.open_settings()
         self.show()
+
+    def open_settings(self):
+        try:
+            with open("settings.txt", 'rb') as f:
+                settings = pickle.load(f)
+                self.combo_tag.setCurrentText(settings['last-station'])
+                self.is_shuffle = settings['shuffle']
+                self.is_repeated = settings['repeat']
+                self.save_directory = settings['save-directory']
+                self.set_shuffle()
+                self.set_repeated()
+        except:
+            print("except import settings")
 
     def set_song_info(self, artist, title, album_title, duration, image_link):
         self.label_artist.setText("%s (%s)" % (artist, album_title))
@@ -156,7 +172,9 @@ class Gui(QMainWindow):
 
     def button_repeat_clicked(self):
         self.is_repeated = not self.is_repeated
+        self.set_repeated()
 
+    def set_repeated(self):
         if self.is_repeated:
             self.button_repeat.setIcon(QIcon('media/repeat_active.png'))
         else:
@@ -164,6 +182,9 @@ class Gui(QMainWindow):
 
     def button_shuffle_clicked(self):
         self.is_shuffle = not self.is_shuffle
+        self.set_shuffle()
+
+    def set_shuffle(self):
         if self.is_shuffle:
             self.button_shuffle.setIcon(QIcon('media/shuffle_active.png'))
         else:
@@ -195,6 +216,16 @@ class Gui(QMainWindow):
         self.tag = text
 
     def closeEvent(self, args):
+        # save settings
+        settings = {'last-station': self.combo_tag.currentText(),
+                    'shuffle': self.is_shuffle,
+                    'repeat': self.is_repeated,
+                    'save-directory': self.save_directory
+                    }
+
+        with open('settings.txt', 'wb') as f:
+            pickle.dump(settings, f)
+
         close_app()
 
     def init_gui(self):
@@ -297,15 +328,15 @@ class Gui(QMainWindow):
 
         self.slider_timeline.setGeometry(20, WINDOW_SIZE[1] / 2 - 15, WINDOW_SIZE[0] - 40, 30)
 
-        self.button_prev.setGeometry(START_POS_MAIN_BUTTONS + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 0,
+        self.button_prev.setGeometry((WINDOW_SIZE[0] - _TOTAL) / 2 + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 0,
                                      WINDOW_SIZE[1] / 2 + 30,
                                      BUTTON_SIZE[0],
                                      BUTTON_SIZE[1])
-        self.button_pause.setGeometry(START_POS_MAIN_BUTTONS + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 1,
+        self.button_pause.setGeometry((WINDOW_SIZE[0] - _TOTAL) / 2 + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 1,
                                       WINDOW_SIZE[1] / 2 + 30,
                                       BUTTON_SIZE[0],
                                       BUTTON_SIZE[1])
-        self.button_next.setGeometry(START_POS_MAIN_BUTTONS + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 2,
+        self.button_next.setGeometry((WINDOW_SIZE[0] - _TOTAL) / 2 + (BUTTON_MARGIN + BUTTON_SIZE[0]) * 2,
                                      WINDOW_SIZE[1] / 2 + 30,
                                      BUTTON_SIZE[0],
                                      BUTTON_SIZE[1])
