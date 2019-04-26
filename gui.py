@@ -10,7 +10,7 @@ import requests
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QSize, Qt
 from PyQt5.QtGui import QFont, QIcon, QPixmap
-from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QSlider
+from PyQt5.QtWidgets import QLabel, QMainWindow, QApplication, QSlider, QDialog
 
 from Logger import Logger
 from cursedyar import main, close_app
@@ -367,6 +367,8 @@ class Gui(QMainWindow):
     def button_settings_clicked(self):
         self.modal.show()
 
+
+
     def slider_volume_changed(self):
         self.volume = self.slider_volume.value() / 100
         self.log.debug("GUI: slider_volume_changed. Volume = %s" % self.volume)
@@ -439,10 +441,12 @@ class Gui(QMainWindow):
         return m, s
 
 
-class ModalWindow(QMainWindow):
+class ModalWindow(QDialog):
     def __init__(self, main_gui):
+
+        super(QDialog, self).__init__()
         self.main_gui = main_gui
-        super(QMainWindow, self).__init__()
+        self.setModal(True)
 
         self.MARGIN = 10
 

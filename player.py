@@ -96,7 +96,7 @@ class Player:
 
             if self.gui.save_clicked:
                 self.log.debug("PLAYER: save_clicked")
-                threading.Thread(target=self.save_music, args=(info[2], info[0], url,)).start()
+                threading.Thread(target=self.save_music, args=(info[2], info[0], url,), daemon=True).start()
                 self.gui.reset_flags()
 
             if self.gui.share_clicked:
